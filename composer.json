@@ -19,6 +19,11 @@
     "php": ">=5.3.3",
     "zendframework/zendframework": "2.*"
   },
+  "suggest": {
+    "doctrine/doctrine-orm-module": "This module was initially designed to work with doctrine module",
+    "sbx-zf2/access-control": "RBAC acl implementation with NVC structure scanner",
+    "sbx-zf2/common": "Our common Lirary"
+  },
   "autoload": {
     "psr-0": {
       "AccessControl": "./DataGrid/src/"
