@@ -1,6 +1,9 @@
 <?php
 namespace DataGrid\DataSource;
 
+use DataGrid\CellSet;
+use DataGrid\Paginator;
+
 class ArraySource implements DataSourceInterface
 {
 
@@ -122,7 +125,10 @@ class ArraySource implements DataSourceInterface
         // TODO: Implement offsetUnset() method.
     }
 
-    public function bindCellsset(CellsSet $cellsset)
+    /**
+     * @param CellSet $cellsset
+     */
+    public function bindCellsset(CellSet $cellsset)
     {
         // TODO: Implement bindCellsset() method.
     }
@@ -164,5 +170,20 @@ class ArraySource implements DataSourceInterface
     public function count()
     {
         // TODO: Implement count() method.
+    }
+
+    public function addOrderBy($field, $direction)
+    {
+        // TODO: Implement addOrderBy() method.
+    }
+
+    public function resetOrderBy()
+    {
+        // TODO: Implement resetOrderBy() method.
+    }
+
+    public function applyPaginator(Paginator $paginator)
+    {
+        // TODO: Implement applyPaginator() method.
     }
 }

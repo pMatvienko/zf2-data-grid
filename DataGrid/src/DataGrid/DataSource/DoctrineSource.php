@@ -365,4 +365,20 @@ class DoctrineSource implements DataSourceInterface
         $this->setPage($paginator->getPage());
         $paginator->setTotalRecordsCount($this->count());
     }
+
+    /**
+     * @return string
+     */
+    public function getCurrentAlias()
+    {
+        return $this->currentAlias;
+    }
+
+    /**
+     * @param string $currentAlias
+     */
+    public function setCurrentAlias($currentAlias)
+    {
+        $this->currentAlias = $currentAlias;
+    }
 }
