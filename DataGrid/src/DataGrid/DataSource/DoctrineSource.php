@@ -259,13 +259,18 @@ class DoctrineSource implements DataSourceInterface
     {
         $out = array();
         foreach ($data as $k => $v) {
-            if ($k === 0 && count($data) == 1) {
+
+            if (($k === 0 && count($data) == 1)) {
                 $out += $this->convertEntityToPlainArray($v, $prefix);
             } elseif (is_array($v) && array_key_exists(0, $v)) {
-//                $out += $this->convertEntityToPlainArray($v, $prefix . $k . '.');
                 $out += $this->convertEntityToPlainArray($v[0], $prefix . $k . '.');
             } else {
-                $out[$prefix . $k] = $v;
+                if(is_array($v)){
+                    $out += $this->convertEntityToPlainArray($v, $k . '.');
+                } else{
+                    $out[$prefix . $k] = $v;
+                }
+
             }
         }
         return $out;
