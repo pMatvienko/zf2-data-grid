@@ -9,6 +9,7 @@ use Zend\ServiceManager\ServiceLocatorAwareTrait;
 class GridPaginatorHelper extends AbstractHelper implements ServiceLocatorAwareInterface
 {
     use ServiceLocatorAwareTrait;
+
     /**
      * Invoke as function
      *
@@ -26,7 +27,7 @@ class GridPaginatorHelper extends AbstractHelper implements ServiceLocatorAwareI
     public function render(Paginator $paginator)
     {
         $pagesCount = $paginator->getPagesCount();
-        if($pagesCount < 2) {
+        if ($pagesCount < 2) {
             return '';
         }
 
@@ -46,45 +47,47 @@ class GridPaginatorHelper extends AbstractHelper implements ServiceLocatorAwareI
         }
 
         $content = '';
-        while($startPage <= $endPage) {
-            if($startPage != $paginator->getPage()) {
-                $content .= '<li><a href="' . $this->assemblePageUrl($startPage, $paginator->getId()) . '">' . $startPage . '</a></li>';
+        while ($startPage <= $endPage) {
+            if ($startPage != $paginator->getPage()) {
+                $content .= '<li><a href="' . $this->assemblePageUrl($startPage,
+                        $paginator->getId()) . '">' . $startPage . '</a></li>';
             } else {
-                $content .= '<li class="active"><a href="' . $this->assemblePageUrl($startPage, $paginator->getId()) . '">' . $startPage . ' <span class="sr-only">(current)</span></a></li>';
+                $content .= '<li class="active"><a href="' . $this->assemblePageUrl($startPage,
+                        $paginator->getId()) . '">' . $startPage . ' <span class="sr-only">(current)</span></a></li>';
             }
             ++$startPage;
         }
-
-        if($paginator->getPage() > $paginator->getVisiblePagesRange()) {
+        $visibleFirstPage = $paginator->getPage() - ($paginator->getVisiblePagesRange());
+        if ($paginator->getPage() > $paginator->getVisiblePagesRange() && $visibleFirstPage > 1) {
             $content = '<li>
               <a href="' . $this->assemblePageUrl(1, $paginator->getId()) . '">
-                <span aria-hidden="true">1</span>
+                <span aria-hidden="true"><b>1</b></span>
               </a>
             </li>'
                 . $content;
         }
 
-        if($paginator->getPage() > 1) {
+        if ($paginator->getPage() > 1) {
             $content = '<li>
-              <a href="' . $this->assemblePageUrl($paginator->getPage()-1, $paginator->getId()) . '">
+              <a href="' . $this->assemblePageUrl($paginator->getPage() - 1, $paginator->getId()) . '">
                 <span aria-hidden="true">&laquo;</span>
               </a>
             </li>'
                 . $content;
         }
 
-
-        if($paginator->getPage() < ($pagesCount-$paginator->getVisiblePagesRange())) {
+        $lastVisiblePage = $paginator->getVisiblePagesRange()*2 + $paginator->getPage();
+        if (($paginator->getPage() < ($pagesCount - $paginator->getVisiblePagesRange())) && $lastVisiblePage < $pagesCount) {
             $content .= '<li>
               <a href="' . $this->assemblePageUrl($pagesCount, $paginator->getId()) . '" aria-label="Next">
-                <span aria-hidden="true">'.$pagesCount.'</span>
+                <span aria-hidden="true"><b>' . $pagesCount . '</b></span>
               </a>
             </li>';
         }
 
-        if($paginator->getPage() < $pagesCount) {
+        if ($paginator->getPage() < $pagesCount) {
             $content .= '<li>
-              <a href="' . $this->assemblePageUrl($paginator->getPage()+1, $paginator->getId()) . '" aria-label="Next">
+              <a href="' . $this->assemblePageUrl($paginator->getPage() + 1, $paginator->getId()) . '" aria-label="Next">
                 <span aria-hidden="true">&raquo;</span>
               </a>
             </li>';
@@ -95,10 +98,10 @@ class GridPaginatorHelper extends AbstractHelper implements ServiceLocatorAwareI
         . '</ul>';
     }
 
-    private function assemblePageUrl($page, $prefix='')
+    private function assemblePageUrl($page, $prefix = '')
     {
         $queryParams = $this->getServiceLocator()->getServiceLocator()->get('Request')->getQuery()->toArray();
-        $queryParams[$prefix.'page'] = $page;
+        $queryParams[$prefix . 'page'] = $page;
 
         return $this->getView()->url(
             null,
