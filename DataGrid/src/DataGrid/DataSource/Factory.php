@@ -11,11 +11,17 @@ class Factory
 
     public function get($source)
     {
-        $type = gettype($source);
-        if($type == 'object'){
-            $type = get_class($source);
+        if($source instanceof \Doctrine\ORM\QueryBuilder || $source instanceof \Doctrine\ORM\EntityRepository){
+            $adapterClass = '\DataGrid\DataSource\DoctrineSource';
         }
-        $adapterClass = $this->getDataAdapterName($type);
+        else{
+            $type = gettype($source);
+            if($type == 'object'){
+                $type = get_class($source);
+            }
+            $adapterClass = $this->getDataAdapterName($type);
+        }
+        
         $adapter = new $adapterClass($source);
         return $adapter;
     }
