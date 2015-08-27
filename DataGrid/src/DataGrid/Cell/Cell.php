@@ -111,10 +111,12 @@ abstract class Cell implements CellInterface
 
     abstract protected function renderContent();
 
-    public function getContentVariables($withModifiers = false)
+    public function getContentVariables($withModifiers = false, $content=null)
     {
+        $content = (null == $content) ? $this->content. implode($this->attribs) : $content;
+
         $variables = array();
-        preg_match_all('/\{\$([^}]+)\}/', $this->content . implode($this->attribs), $variables);
+        preg_match_all('/\{\$([^}]+)\}/', $content, $variables);
         $out = array();
         foreach ($variables[0] as $key => $mask) {
             if (!$withModifiers) {

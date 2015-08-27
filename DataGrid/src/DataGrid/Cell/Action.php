@@ -52,11 +52,7 @@ class Action extends Cell
             if (false === strpos($param, '{$')) {
                 continue;
             }
-            $vars[$param] = trim($param, '{$}');
-            if (!$withModifiers) {
-                $vars[$param] = explode(self::MODIFIER_SPLITTER, $vars[$param]);
-                $vars[$param] = $vars[$param][0];
-            }
+            $vars += parent::getContentVariables($withModifiers, $param);
         }
         return $vars;
     }
@@ -89,13 +85,26 @@ class Action extends Cell
 
     protected function renderContent()
     {
-        $urlParams = $this->getContent();
-        $data = $this->getData();
-        foreach ($urlParams as $k => $param) {
-            $param = trim($param, '{$}');
-            if (array_key_exists($param, $data)) {
-                $urlParams[$k] = $data[$param];
+//        $data = $this->getData();
+        $variables = $this->getContentVariables(true);
+        $dataToReplace = array();
+        foreach($variables as $mask => $var)
+        {
+            $var = $this->getData($var);
+            if(gettype($var) == 'object')
+            {
+                throw new Exception\ObjectValueException('Grid can not render complex values. Try to apply some modifier to value "' . $mask . '"');
             }
+            $dataToReplace[$mask] = $var;
+        }
+
+        $urlParams = $this->getContent();
+        foreach ($urlParams as $k => $param) {
+            $urlParams[$k] = str_replace(
+                array_keys($dataToReplace),
+                array_values($dataToReplace),
+                $param
+            );
         }
 
         $routeMatch = $this->getServiceLocator()->get('Application')->getMvcEvent()->getRouteMatch();
