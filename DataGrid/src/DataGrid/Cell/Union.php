@@ -77,6 +77,12 @@ class Union extends Cell
     }
     public function getContentVariables($withModifiers = false)
     {
-        return array();
+        $variables = array();
+        if(is_array($this->content)){
+            foreach($this->content as $cell){
+                $variables += $cell->getContentVariables($withModifiers);
+            }
+        }
+        return $variables;
     }
 }
