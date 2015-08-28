@@ -1,36 +1,69 @@
 <?php
 namespace DataGrid;
 
-class CellSet implements \Countable, \Iterator, \ArrayAccess
-{
-    private $cells = array();
-    private $id='';
+use DataGrid\Cell\CellInterface;
+use Zend\ServiceManager\ServiceLocatorAwareInterface;
+use Zend\ServiceManager\ServiceLocatorAwareTrait;
 
-    public function __construct(array $configuration = array())
+class CellSet implements \Countable, \Iterator, \ArrayAccess, ServiceLocatorAwareInterface
+{
+    use ServiceLocatorAwareTrait;
+
+    /**
+     * @var CellInterface[]
+     */
+    private $cells = [];
+
+    /**
+     * @var string
+     */
+    private $id = '';
+
+    public function __construct(array $configuration = [])
     {
-        if(is_array($configuration)) {
-            foreach($configuration as $cellAlias => $cell)
-            {
-                $this->appendCell($cell, $cellAlias);
+        foreach ($configuration as $k => $v) {
+            $call = 'set' . ucfirst($k);
+            if (method_exists($this, $call)) {
+                $this->$call($v);
             }
         }
     }
 
     /**
-     * @param $cell
-     * @param null $name
+     * Setting cells collection.
+     *
+     * @param array $configuration
+     *
      * @return $this
      */
-    public function prependCell($cell, $name=null)
+    public function setCells(array $configuration = [])
+    {
+        if (is_array($configuration)) {
+            foreach ($configuration as $cellAlias => $cell) {
+                $this->appendCell($cell, $cellAlias);
+            }
+        }
+        return $this;
+    }
+
+    /**
+     * Add cell as first cell of collection.
+     *
+     * @param array|CellInterface $cell Cell to add.
+     * @param string|null $name         Cell name.
+     *
+     * @return $this
+     */
+    public function prependCell($cell, $name = null)
     {
         $cell = $this->buildCell($cell);
-        if($name == null && $cell->getName() != '') {
+        if ($name == null && $cell->getName() != '') {
             $name = $cell->getName();
         }
-        if($name == null){
+        if ($name == null) {
             array_unshift($this->cells, $cell);
         } else {
-            $this->cells = array($name => $cell)+$this->cells;
+            $this->cells = [$name => $cell] + $this->cells;
         }
         reset($this->cells);
         $cell->setName(key($this->cells));
@@ -38,18 +71,21 @@ class CellSet implements \Countable, \Iterator, \ArrayAccess
     }
 
     /**
-     * @param $cell
-     * @param null $name
+     * Add cell as last cell of collection.
+     *
+     * @param array|CellInterface $cell Cell to add.
+     * @param string|null $name         Cell name.
+     *
      * @return $this
      */
-    public function appendCell($cell, $name=null)
+    public function appendCell($cell, $name = null)
     {
         $cell = $this->buildCell($cell);
-        if($name == null && $cell->getName() != '') {
+        if ($name == null && $cell->getName() != '') {
             $name = $cell->getName();
         }
 
-        if($name == null){
+        if ($name == null) {
             $this->cells[] = $cell;
         } else {
             $this->cells[$name] = $cell;
@@ -60,23 +96,46 @@ class CellSet implements \Countable, \Iterator, \ArrayAccess
         return $this;
     }
 
+    /**
+     * Gets cell by name, or offset, if names was not provided.
+     *
+     * @param $offset Name or offset.
+     *
+     * @return CellInterface
+     */
     public function getCell($offset)
     {
         return $this->cells[$offset]->setId($this->getId());
     }
 
+    /**
+     * Building cell from provided config.
+     *
+     * @param CellInterface|array $cell Cell instance or configuration array.
+     *
+     * @return CellInterface
+     */
     private function buildCell($cell)
     {
-        if(is_array($cell)){
-            $factory = new Cell\Factory();
-            $cell = $factory->get($cell);
+        if (is_array($cell)) {
+            $cell = $this->getServiceLocator()->get('DataGrid\Factory\Cell')->get($cell);
+        } elseif (!($cell instanceof CellInterface)) {
+            throw new \RuntimeException('You must provide Correct cell definition or Cell instance implementing CellInterface for data grid cells set.');
         }
         return $cell;
     }
 
+    /**
+     * Removing cell by name or offset.
+     *
+     * @param $name Cell name or offset.
+     *
+     * @return $this
+     * @throws Exception
+     */
     public function removeCell($name)
     {
-        if(!array_key_exists($name, $this->cells)){
+        if (!array_key_exists($name, $this->cells)) {
             throw new Exception('Cell "' . $name . '" is not set, so could not be removed');
         }
         unset($this->cells[$name]);
@@ -84,16 +143,25 @@ class CellSet implements \Countable, \Iterator, \ArrayAccess
     }
 
     /**
-     * @return Cell\Cell[]
+     * Gets cells collection
+     *
+     * @return Cell\CellInterface[]
      */
     public function getCells()
     {
-        foreach($this->cells as $cell){
+        foreach ($this->cells as $cell) {
             $cell->setId($this->getId());
         }
         return $this->cells;
     }
 
+    /**
+     * Sets a row data to cells set that will be used to render values.
+     *
+     * @param array $data Row data as array.
+     *
+     * @return $this
+     */
     public function setData(&$data)
     {
         /**
@@ -105,9 +173,14 @@ class CellSet implements \Countable, \Iterator, \ArrayAccess
         return $this;
     }
 
+    /**
+     * Gets variables(e.g. fields) used in cells
+     *
+     * @return array
+     */
     public function getVariables()
     {
-        $vars = array();
+        $vars = [];
         /**
          * @var Cell\Cell $cell
          */
@@ -224,7 +297,7 @@ class CellSet implements \Countable, \Iterator, \ArrayAccess
      * @param mixed $offset <p>
      *                      The offset to assign the value to.
      *                      </p>
-     * @param mixed $value <p>
+     * @param mixed $value  <p>
      *                      The value to set.
      *                      </p>
      *
@@ -267,13 +340,16 @@ class CellSet implements \Countable, \Iterator, \ArrayAccess
         return count($this->cells);
     }
 
+    /**
+     * Gets a list of columns, that should be removed from rendered grid if does not contains values for any rows.
+     *
+     * @return array
+     */
     public function getColumnsToHideIfUnavailable()
     {
-        $out = array();
-        foreach($this->getCells() as $key => $cell)
-        {
-            if($cell->getHideCellIfUnavailable())
-            {
+        $out = [];
+        foreach ($this->getCells() as $key => $cell) {
+            if ($cell->getHideCellIfUnavailable()) {
                 $out[] = $key;
             }
         }
@@ -281,6 +357,8 @@ class CellSet implements \Countable, \Iterator, \ArrayAccess
     }
 
     /**
+     * Gets an id.
+     *
      * @return string
      */
     public function getId()
@@ -289,7 +367,10 @@ class CellSet implements \Countable, \Iterator, \ArrayAccess
     }
 
     /**
+     * Sets an id. Used by grid instance to notify cells set about its identifier.
+     *
      * @param string $id
+     *
      * @return $this
      */
     public function setId($id)

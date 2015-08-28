@@ -1,8 +1,12 @@
 <?php
 namespace DataGrid\Cell;
 
-class Union extends Cell
+use Zend\ServiceManager\ServiceLocatorAwareInterface;
+use Zend\ServiceManager\ServiceLocatorAwareTrait;
+
+class Union extends Cell implements ServiceLocatorAwareInterface
 {
+    use ServiceLocatorAwareTrait;
     private $joinBy = null;
 
     /**
@@ -63,13 +67,12 @@ class Union extends Cell
      */
     public function setContent($content)
     {
-        $factory = new Factory();
         if(!is_array($content)){
             throw new Exception('Content for union column should be array of other columns or their definations');
         }
         foreach($content as $index => $cell){
             if(is_array($cell)){
-                $content[$index] = $factory->get($cell);
+                $content[$index] = $this->getServiceLocator()->get('DataGrid\Factory\Cell')->get($cell);
             }
         }
         $this->content = $content;

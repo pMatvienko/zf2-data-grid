@@ -24,6 +24,7 @@ class Module implements Feature\AutoloaderProviderInterface, Feature\ConfigProvi
 
     public function onBootstrap(\Zend\Mvc\MvcEvent $e)
     {
-        Cell\Action::setServiceLocator($e->getApplication()->getServiceManager());
+//        Cell\Action::setServiceLocator($e->getApplication()->getServiceManager());
+        DataGrid::setServiceLocator($e->getApplication()->getServiceManager());
     }
 }

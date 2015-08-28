@@ -1,15 +1,40 @@
 <?php
 namespace DataGrid;
 
-
-use DataGrid\Filter\Item\Factory;
+use Zend\ServiceManager\ServiceLocatorAwareInterface;
+use Zend\ServiceManager\ServiceLocatorAwareTrait;
 use DataGrid\Filter\ItemInterface;
 
-class Filter
+class Filter implements ServiceLocatorAwareInterface
 {
+    use ServiceLocatorAwareTrait;
+    /**
+     * Filter Items collection.
+     * @var \DataGrid\Filter\ItemInterface[]
+     */
     private $items = array();
+
+    /**
+     * Search box item. Allowed only one search box for grid.
+     * @var null|\DataGrid\Filter\ItemInterface
+     */
     private $searchBox = null;
     private $attributes = array();
+
+    /**
+     * @var string
+     */
+    private $id = '';
+
+    public function __construct(array $configuration = [])
+    {
+        foreach ($configuration as $k => $v) {
+            $call = 'set' . ucfirst($k);
+            if (method_exists($this, $call)) {
+                $this->$call($v);
+            }
+        }
+    }
 
     /**
      * @return array
@@ -30,8 +55,7 @@ class Filter
         if ($defination instanceof ItemInterface) {
             $item = $defination;
         } elseif (is_array($defination)) {
-            $factory = new Factory();
-            $item = $factory->get($defination);
+            $item = $this->getServiceLocator()->get('DataGrid\Factory\FilterItem')->get($defination);
         }
 
         if($item instanceof Filter\Item\Search)
@@ -107,5 +131,24 @@ class Filter
             $item->applyTo($dataSource);
         }
         return $dataSource;
+    }
+
+    /**
+     * @return string
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    /**
+     * @param string $id
+     *
+     * @return $this
+     */
+    public function setId($id)
+    {
+        $this->id = $id;
+        return $this;
     }
 }

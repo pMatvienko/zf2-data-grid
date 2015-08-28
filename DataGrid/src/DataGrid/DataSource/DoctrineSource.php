@@ -3,7 +3,6 @@ namespace DataGrid\DataSource;
 
 use DataGrid\CellSet;
 use DataGrid\Exception;
-use DataGrid\Paginator;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\ORM\Query\Expr;
@@ -24,7 +23,11 @@ class DoctrineSource implements DataSourceInterface, DataSourceFilterableInterfa
 
     private $iteratorPosition = 0;
 
-    public function __construct($source)
+    public function __construct()
+    {
+    }
+
+    public function setSource($source)
     {
         if ($source instanceof EntityRepository) {
             $this->source = $source->createQueryBuilder($this->currentAlias);
@@ -38,6 +41,7 @@ class DoctrineSource implements DataSourceInterface, DataSourceFilterableInterfa
         } else {
             throw new Exception('Doctrine Adapter can handle only doctrine repository or Doctrine Query Builder');
         }
+        return $this;
     }
 
     public function orFilterGroup($fields, $joiner='OR')

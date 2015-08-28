@@ -18,8 +18,26 @@ abstract class Cell implements CellInterface
     private $avilabilityChecker = null;
     private $name = '';
     private $id = '';
-
     private $orderBy = null;
+
+
+    /**
+     * @param $options
+     */
+    public function __construct($options = array())
+    {
+        $this->setOptions($options);
+    }
+
+    public function setOptions($options)
+    {
+        foreach ($options as $k => $v) {
+            $k = 'set' . ucfirst($k);
+            if (method_exists($this, $k)) {
+                $this->$k($v);
+            }
+        }
+    }
 
     public function getAttrib($name)
     {
@@ -51,19 +69,6 @@ abstract class Cell implements CellInterface
     {
         $this->attribs[$name] = $value;
         return $this;
-    }
-
-    /**
-     * @param $options
-     */
-    public function __construct($options = array())
-    {
-        foreach ($options as $k => $v) {
-            $k = 'set' . ucfirst($k);
-            if (method_exists($this, $k)) {
-                $this->$k($v);
-            }
-        }
     }
 
     /**

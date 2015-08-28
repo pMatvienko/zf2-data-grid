@@ -1,18 +1,14 @@
 <?php
 namespace DataGrid\Cell;
 
-use DataGrid\Exception;
+use Zend\ServiceManager\ServiceLocatorAwareInterface;
+use Zend\ServiceManager\ServiceLocatorAwareTrait;
 
-class Factory
+class Factory implements ServiceLocatorAwareInterface
 {
-    const TYPE = 'type';
+    use ServiceLocatorAwareTrait;
 
-    private static $cellTypes = array(
-        'text' => '\DataGrid\Cell\Text',
-        'boolean' => '\DataGrid\Cell\Boolean',
-        'union' => '\DataGrid\Cell\Union',
-        'action' => '\DataGrid\Cell\Action'
-    );
+    const TYPE = 'type';
 
     public function get($type, $config = null)
     {
@@ -20,21 +16,8 @@ class Factory
             $config = $type;
             $type = $config[self::TYPE];
         }
-        $cellClass = $this->getCellClass($type);
-        $cell = new $cellClass($config);
+        $cell = $this->getServiceLocator()->get('DataGrid\\Cell\\' . ucfirst($type));
+        $cell->setOptions($config);
         return $cell;
-    }
-
-    public static function registerCellType($type, $class)
-    {
-        self::$cellTypes[strtolower($type)] = $class;
-    }
-
-    public function getCellClass($type)
-    {
-        if(empty(self::$cellTypes[strtolower($type)])){
-            throw new Exception('Cell Type "' . $type . '" is not registered');
-        }
-        return self::$cellTypes[strtolower($type)];
     }
 }

@@ -9,7 +9,12 @@ abstract class ItemAbstract implements ItemInterface
     protected $value = null;
     protected $name = 'abstract';
 
-    public function __construct($options)
+    public function __construct($options = array())
+    {
+        $this->setOptions($options);
+    }
+
+    public function setOptions($options)
     {
         foreach($options as $k=>$v)
         {
@@ -19,6 +24,7 @@ abstract class ItemAbstract implements ItemInterface
                 $this->$call($v);
             }
         }
+        return $this;
     }
 
     private $label = null;

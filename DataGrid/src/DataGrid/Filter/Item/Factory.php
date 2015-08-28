@@ -1,34 +1,19 @@
 <?php
 namespace DataGrid\Filter\Item;
 
-use DataGrid\Exception;
+use Zend\ServiceManager\ServiceLocatorAwareInterface;
+use Zend\ServiceManager\ServiceLocatorAwareTrait;
 
-class Factory
+class Factory implements ServiceLocatorAwareInterface
 {
-    const TYPE = 'type';
+    use ServiceLocatorAwareTrait;
 
-    private static $itemTypes = array(
-        'search' => '\DataGrid\Filter\Item\Search',
-    );
+    const TYPE = 'type';
 
     public function get($defination = null)
     {
-        $item = $this->getItemClass($defination[self::TYPE]);
-        $item = new $item($defination);
-
+        $item = $this->getServiceLocator()->get('DataGrid\\Filter\\' . ucfirst($defination[self::TYPE]));
+        $item->setOptions($defination);
         return $item;
-    }
-
-    public static function registerItemType($type, $class)
-    {
-        self::$itemTypes[strtolower($type)] = $class;
-    }
-
-    public function getItemClass($type)
-    {
-        if(empty(self::$itemTypes[strtolower($type)])){
-            throw new Exception('Filter item Type "' . $type . '" is not registered');
-        }
-        return self::$itemTypes[strtolower($type)];
     }
 }

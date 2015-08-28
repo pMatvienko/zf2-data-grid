@@ -2,22 +2,16 @@
 namespace DataGrid\Cell;
 
 use Zend\Mvc\ModuleRouteListener;
+use Zend\ServiceManager\ServiceLocatorAwareInterface;
+use Zend\ServiceManager\ServiceLocatorAwareTrait;
 
-class Action extends Cell
+class Action extends Cell implements ServiceLocatorAwareInterface
 {
-    private static $serviceLocator = null;
+    use ServiceLocatorAwareTrait;
 
     private $route = null;
 
     private $textLabel = '';
-
-    /**
-     * @param null $serviceLocator
-     */
-    public static function setServiceLocator($serviceLocator)
-    {
-        self::$serviceLocator = $serviceLocator;
-    }
 
     /**
      * @return string
@@ -35,14 +29,6 @@ class Action extends Cell
     {
         $this->textLabel = $textLabel;
         return $this;
-    }
-
-    /**
-     * @return null
-     */
-    public function getServiceLocator()
-    {
-        return self::$serviceLocator;
     }
 
     public function getContentVariables($withModifiers = false)
