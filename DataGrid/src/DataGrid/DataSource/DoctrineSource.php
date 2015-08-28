@@ -8,8 +8,9 @@ use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\ORM\Query\Expr;
 
-class DoctrineSource implements DataSourceInterface
+class DoctrineSource implements DataSourceInterface, DataSourceFilterableInterface, DataSourcePaginatedInterface, DataSourceSortableInterface
 {
+
     const QUERY_ALIAS_SEPARATOR = ':';
 
     private $source = null;
@@ -37,6 +38,62 @@ class DoctrineSource implements DataSourceInterface
         } else {
             throw new Exception('Doctrine Adapter can handle only doctrine repository or Doctrine Query Builder');
         }
+    }
+
+    public function orFilterGroup($fields, $joiner='OR')
+    {
+        $conditions = array();
+        foreach($fields as $field=>$data){
+            $conditions[] = $this->compileFilterParams($field, $data['value'], $data['type']);
+        }
+        $this->source->orWhere('(' . implode(' ' . $joiner . ' ', $conditions) . ')');
+    }
+
+    public function andFilterGroup($fields, $joiner='OR')
+    {
+        $conditions = array();
+        foreach($fields as $field=>$data){
+            $conditions[] = $this->compileFilterParams($field, $data['value'], $data['type']);
+        }
+        $this->source->andWhere('(' . implode(' ' . $joiner . ' ', $conditions) . ')');
+    }
+
+    public function andFilter($field, $value, $type = self::FILTER_TYPE_EQ)
+    {
+        $this->source->andWhere($this->compileFilterParams($field, $value, $type));
+        return $this;
+    }
+
+    public function orFilter($field, $value, $type = self::FILTER_TYPE_EQ)
+    {
+        $this->source->orWhere($this->compileFilterParams($field, $value, $type));
+        return $this;
+    }
+
+    protected function compileFilterParams($field, $value, $type = self::FILTER_TYPE_EQ)
+    {
+        $dbField = !strpos($field, '.') ? $this->currentAlias . '.' . $field : $field;
+        $paramName = str_replace('.', '_', $field) . '_' . uniqid();
+        switch ($type) {
+            case self::FILTER_TYPE_EQ:
+                $condition = $dbField . ' = :' . $paramName;
+                $this->source->setParameter($paramName, $value);
+                break;
+            case self::FILTER_YPE_CONTAINS:
+                $condition = $dbField . ' LIKE :' . $paramName;
+                $this->source->setParameter($paramName, '%' . $value . '%');
+                break;
+            default:
+                throw new \RuntimeException('Filter comparison type "' . $type . '" is not supported by Doctrine grid source');
+        }
+        return $condition;
+    }
+
+    public function clearFilters()
+    {
+        $this->source->resetDQLPart('where');
+        $this->source->setParameters(array());
+        return $this;
     }
 
     public function setMaxResults($maxResults)
@@ -148,8 +205,10 @@ class DoctrineSource implements DataSourceInterface
      */
     public function count()
     {
+        $this->assembleQueryWithJoins();
         $q = clone $this->source;
-        return $q->resetDQLPart('orderBy')->select('COUNT(' . $this->currentAlias . ')')->getQuery()->getSingleScalarResult();
+        $q = $q->resetDQLPart('orderBy')->select('COUNT(' . $this->currentAlias . ')')->getQuery();
+        return $q->getSingleScalarResult();
     }
 
     public function addOrderBy($field, $direction)
@@ -168,36 +227,26 @@ class DoctrineSource implements DataSourceInterface
     {
         if (null == $this->queryResult) {
             if (null != $this->getCellssetDecorator()) {
-                $joins = $this->getJoins();
-                /**
-                 * @var \Doctrine\ORM\Query\Expr\Select $select
-                 */
-                $select = $this->source->getDQLPart('select')[0];
-                foreach ($this->getJoinFields() as $field) {
-                    $fieldQueryAlias = str_replace('.', self::QUERY_ALIAS_SEPARATOR, $field);
-                    if (!array_key_exists($fieldQueryAlias, $joins)) {
-                        $this->source->leftJoin($this->currentAlias . '.' . $field, $fieldQueryAlias, Expr\Join::WITH);
-                        $select->add($fieldQueryAlias);
-                    }
-                }
+                $this->assembleQueryWithJoins();
                 /**
                  * @var \DataGrid\Cell\Cell $cell
                  */
-                foreach($this->getCellssetDecorator() as $cell){
+                foreach ($this->getCellssetDecorator() as $cell) {
                     $cellDirection = $cell->getCurrentOrderDirection();
                     $orderResetted = false;
-                    if(!empty($cellDirection)){
-                        if(!$orderResetted){
+                    if (!empty($cellDirection)) {
+                        if (!$orderResetted) {
                             $this->resetOrderBy();
                         }
                         $orderFields = explode(',', $cell->getOrderBy());
-                        foreach($orderFields as $field) {
+                        foreach ($orderFields as $field) {
                             $this->source->addOrderBy($this->currentAlias . '.' . $field, $cellDirection);
                         }
                     }
                 }
             }
             $q = $this->source->getQuery();
+
             if (null !== $this->getMaxResults()) {
                 $q->setMaxResults($this->getMaxResults());
                 if (null != $this->getPage()) {
@@ -214,6 +263,22 @@ class DoctrineSource implements DataSourceInterface
         }
 
         return $this->queryResult;
+    }
+
+    private function assembleQueryWithJoins(){
+        $joins = $this->getJoins();
+        /**
+         * @var \Doctrine\ORM\Query\Expr\Select $select
+         */
+        $select = $this->source->getDQLPart('select')[0];
+        foreach ($this->getJoinFields() as $field) {
+            $fieldQueryAlias = str_replace('.', self::QUERY_ALIAS_SEPARATOR, $field);
+            if (!array_key_exists($fieldQueryAlias, $joins)) {
+                $this->source->leftJoin($this->currentAlias . '.' . $field, $fieldQueryAlias, Expr\Join::WITH);
+                $select->add($fieldQueryAlias);
+            }
+        }
+        return $this->source;
     }
 
     private function getJoins()
@@ -265,9 +330,9 @@ class DoctrineSource implements DataSourceInterface
             } elseif (is_array($v) && array_key_exists(0, $v)) {
                 $out += $this->convertEntityToPlainArray($v[0], $prefix . $k . '.');
             } else {
-                if(is_array($v)){
+                if (is_array($v)) {
                     $out += $this->convertEntityToPlainArray($v, $k . '.');
-                } else{
+                } else {
                     $out[$prefix . $k] = $v;
                 }
 
@@ -362,13 +427,6 @@ class DoctrineSource implements DataSourceInterface
     public function offsetUnset($offset)
     {
         throw new Exception('Core Grid Data Source is read only.');
-    }
-
-    public function applyPaginator(Paginator $paginator)
-    {
-        $this->setMaxResults($paginator->getPageSize());
-        $this->setPage($paginator->getPage());
-        $paginator->setTotalRecordsCount($this->count());
     }
 
     /**

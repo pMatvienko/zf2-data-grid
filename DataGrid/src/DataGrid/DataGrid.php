@@ -14,7 +14,29 @@ class DataGrid
     private $id = '';
     private $defaultOrderField = null;
     private $defaultOrderDirection = null;
+    private $filter = null;
 
+    public function addFilterItem($definetion, $name = null)
+    {
+        $this->getFilter()->addItem($definetion, $name);
+        return $this;
+    }
+
+    /**
+     * @return Filter
+     */
+    public function getFilter()
+    {
+        if(null == $this->filter){
+            $this->filter = new Filter();
+        }
+        return $this->filter;
+    }
+
+    public function hasFilter()
+    {
+        return $this->filter != null;
+    }
 
     public function appendCell($definetion, $name = null)
     {
@@ -45,13 +67,20 @@ class DataGrid
      */
     public function getDataSource()
     {
-        if (null != $this->getDefaultOrderDirection() && null != $this->getDefaultOrderField()) {
+        $this->dataSource->bindCellsset($this->getCells());
+
+        if (null != $this->getDefaultOrderDirection() && null != $this->getDefaultOrderField() && ($this->dataSource instanceof \DataGrid\DataSource\DataSourceSortableInterface)) {
             $this->dataSource->addOrderBy($this->getDefaultOrderField(), $this->getDefaultOrderDirection());
         }
-        if (null != $this->getPaginator()) {
-            $this->dataSource->applyPaginator($this->getPaginator());
+
+        if($this->hasFilter()) {
+            $this->getFilter()->applyTo($this->dataSource);
         }
-        return $this->dataSource->bindCellsset($this->getCells());
+
+        if (null != $this->getPaginator()) {
+            $this->getPaginator()->applyTo($this->dataSource);
+        }
+        return $this->dataSource;
     }
 
     /**

@@ -147,17 +147,6 @@ class ArraySource implements DataSourceInterface
     {
         // TODO: Implement getMaxResults() method.
     }
-
-    public function setPage($page)
-    {
-        // TODO: Implement setPage() method.
-    }
-
-    public function getPage()
-    {
-        // TODO: Implement getPage() method.
-    }
-
     /**
      * (PHP 5 &gt;= 5.1.0)<br/>
      * Count elements of an object
@@ -180,10 +169,5 @@ class ArraySource implements DataSourceInterface
     public function resetOrderBy()
     {
         // TODO: Implement resetOrderBy() method.
-    }
-
-    public function applyPaginator(Paginator $paginator)
-    {
-        // TODO: Implement applyPaginator() method.
     }
 }

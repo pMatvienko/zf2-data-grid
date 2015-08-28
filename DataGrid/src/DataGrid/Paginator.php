@@ -121,4 +121,15 @@ class Paginator
         $this->id = $id;
         return $this;
     }
+
+    public function applyTo(DataSource\DataSourceInterface $dataSource)
+    {
+        if(!($dataSource instanceof DataSource\DataSourcePaginatedInterface)){
+            throw new \RuntimeException('Provided grid data source can not be paginated. You should remove paginator section config for grid with provided data source');
+        }
+
+        $dataSource->setMaxResults($this->getPageSize());
+        $dataSource->setPage($this->getPage());
+        $this->setTotalRecordsCount($dataSource->count());
+    }
 }
