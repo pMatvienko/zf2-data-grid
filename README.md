@@ -3,7 +3,7 @@
 
 ## Usage example
 
-<?php
+```<?php
 namespace UKEAS\Grid\Institute;
 
 use \DataGrid\DataGrid;
@@ -143,4 +143,4 @@ class Common extends DataGrid
             'pageSize' => 50,
         ));
     }
-}
+}```
