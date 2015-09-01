@@ -13,6 +13,8 @@ class Action extends Cell implements ServiceLocatorAwareInterface
 
     private $textLabel = '';
 
+    private $isEnabledRef = false;
+
     /**
      * @return string
      */
@@ -28,6 +30,25 @@ class Action extends Cell implements ServiceLocatorAwareInterface
     public function setTextLabel($textLabel)
     {
         $this->textLabel = $textLabel;
+        return $this;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isIsEnabledRef()
+    {
+        return $this->isEnabledRef;
+    }
+
+    /**
+     * @param boolean $isEnabledRef
+     *
+     * @return $this
+     */
+    public function setIsEnabledRef($isEnabledRef)
+    {
+        $this->isEnabledRef = $isEnabledRef;
         return $this;
     }
 
@@ -113,6 +134,17 @@ class Action extends Cell implements ServiceLocatorAwareInterface
          * @var \Zend\Mvc\Router\Http\TreeRouteStack $router
          */
         $router = $this->getServiceLocator()->get('Application')->getMvcEvent()->getRouter();
+
+        if($this->isIsEnabledRef()){
+            /**
+             * @var \Zend\Http\PhpEnvironment\Request $request
+             */
+            $request = $this->getServiceLocator()->get('request');
+            $query = array('ref' => urlencode($request->getRequestUri()));
+            return $router->assemble($urlParams, array('name' => $this->getRoute(), 'query' => $query));
+        }
+
+
         return $router->assemble($urlParams, array('name' => $this->getRoute()));
     }
 
