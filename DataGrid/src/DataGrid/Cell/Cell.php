@@ -33,6 +33,7 @@ abstract class Cell implements CellInterface
     {
         foreach ($options as $k => $v) {
             $k = 'set' . ucfirst($k);
+
             if (method_exists($this, $k)) {
                 $this->$k($v);
             }
@@ -164,6 +165,7 @@ abstract class Cell implements CellInterface
     public function getModifiersByMask($mask)
     {
         $mask = explode(self::MODIFIER_SPLITTER, $mask);
+        return $mask;
     }
 
     public function setAvailabilityCheck($check)
