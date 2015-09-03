@@ -185,6 +185,9 @@ abstract class Cell implements CellInterface
         } elseif ($this->avilabilityChecker instanceof PublicInterface) {
             return $this->avilabilityChecker->calculate($this->getData());
         } else {
+            /**
+             * @var function $checker
+             */
             $checker = $this->avilabilityChecker;
             return $checker($this->getData());
         }
