@@ -40,7 +40,7 @@ class GridTableHelper extends AbstractTranslatorHelper
                 $rows .= $this->getHelper('dataGridRow')->render($item);
             }
         } else {
-            $label = 'sbx-grid:no-records-found';
+            $label = 'No Records Found';
             if (null !== ($translator = $this->getTranslator())) {
                 $label = $translator->translate(
                     $label, $this->getTranslatorTextDomain()
