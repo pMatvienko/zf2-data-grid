@@ -316,12 +316,15 @@ class DoctrineSource implements DataSourceInterface, DataSourceFilterableInterfa
 
     private function decorateWithCellsset($entity)
     {
-        $entity = $this->convertEntityToPlainArray($entity);
-        $decorator = clone $this->getCellssetDecorator();
-        if (null == $decorator) {
-            return $entity;
+        if($this->getCellssetDecorator() != null){
+            $entity = $this->convertEntityToPlainArray($entity);
+            $decorator = clone $this->getCellssetDecorator();
+            if (null == $decorator) {
+                return $entity;
+            }
+            return $decorator->setData($entity);
         }
-        return $decorator->setData($entity);
+        return $entity;
     }
 
     private function convertEntityToPlainArray($data, $prefix = '')
