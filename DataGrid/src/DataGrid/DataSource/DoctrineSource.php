@@ -95,7 +95,7 @@ class DoctrineSource implements DataSourceInterface, DataSourceFilterableInterfa
 
     public function clearFilters()
     {
-        $this->source->resetDQLPart('where');
+        //$this->source->resetDQLPart('where');
         $this->source->setParameters(array());
         return $this;
     }
